@@ -20,7 +20,7 @@ async function main() {
     simulateMonitorRequest({ "numberOfGateways": 15, "numberOfRoutes": 21 }, exitnodeIPs[0]),
     simulateMonitorRequest({ "numberOfGateways": 15, "numberOfRoutes": 29 }, exitnodeIPs[1]),
     simulateRoutingTableRequest('129.0.0.0/26,129.0.0.1|127.0.0.0/26,127.0.0.1|128.0.0.0/26,128.0.0.1|127.0.0.10/26,127.0.0.1|', exitnodeIPs[0]),
-    simulateRoutingTableRequest('122.0.0.0/26,129.0.0.1|125.0.0.0/26,124.0.0.1|121.0.0.0/26,121.0.0.1|', exitnodeIPs[1]),
+    simulateRoutingTableRequest('122.0.0.0/26,129.0.0.1|125.0.0.0/26,124.0.0.1|121.0.0.0/26,121.0.0.1|', exitnodeIPs[1], true),
     simulateRoutingTableRequest('', exitnodeIPs[2]) // simulate an empty POST
   ])
 }
@@ -52,11 +52,11 @@ async function monitorRequest(data, exitnodeIP) {
       if (error) return reject(error)
       return resolve(response)
     })
-  })  
+  })
 }
 
-async function simulateRoutingTableRequest(body, exitnodeIP) {
-  const response = await routingTableRequest(body, exitnodeIP)
+async function simulateRoutingTableRequest(body, exitnodeIP, delay) {
+  const response = await routingTableRequest(body, exitnodeIP, delay)
   switch (response.statusCode) {
     case 200:
       console.info(`Successful /routing-table request`)
@@ -66,7 +66,7 @@ async function simulateRoutingTableRequest(body, exitnodeIP) {
   }
 }
 
-async function routingTableRequest(body, exitnodeIP) {
+async function routingTableRequest(body, exitnodeIP, delay) {
   return new Promise((resolve, reject) => {
     const options = {
       url: `http://localhost:${process.env.PORT}/api/v0/nodes`,
@@ -76,9 +76,12 @@ async function routingTableRequest(body, exitnodeIP) {
       },
       body
     }
-    request.post(options, (error, response) => {
-      if (error) return reject(error)
-      return resolve(response)
-    })
+    console.log({delay})
+    setTimeout(() => {
+      request.post(options, (error, response) => {
+        if (error) return reject(error)
+        return resolve(response)
+      })
+    }, delay ? 3000 : 0);
   })
 }
